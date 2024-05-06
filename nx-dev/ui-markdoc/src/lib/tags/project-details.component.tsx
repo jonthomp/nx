@@ -1,5 +1,5 @@
 'use client';
-import { JSX, ReactElement, useEffect, useState } from 'react';
+import { JSX, ReactElement, useEffect, useLayoutEffect, useState } from 'react';
 import { ProjectDetails as ProjectDetailsUi } from '@nx/graph/ui-project-details';
 import { ExpandedTargetsProvider } from '@nx/graph/shared';
 
@@ -20,11 +20,13 @@ export function ProjectDetails({
   height,
   title,
   jsonFile,
+  expandedTargets = [],
   children,
 }: {
   height: string;
   title: string;
   jsonFile?: string;
+  expandedTargets?: string[];
   children: ReactElement;
 }): JSX.Element {
   const [parsedProps, setParsedProps] = useState<any>();
@@ -42,6 +44,15 @@ export function ProjectDetails({
       getData(jsonFile);
     }
   }, [jsonFile, setParsedProps]);
+
+  useLayoutEffect(() => {
+    if (expandedTargets.length > 0) {
+      const element = document.getElementById('target-' + expandedTargets[0]);
+      if (element) {
+        element.scrollIntoView();
+      }
+    }
+  }, [expandedTargets]);
 
   if (!jsonFile && !parsedProps) {
     if (!children || !children.hasOwnProperty('props')) {
@@ -77,18 +88,16 @@ export function ProjectDetails({
           {title}
         </div>
       )}
-      <div
-        className={`not-prose ${
-          height ? `p-4 h-[${height}] overflow-y-auto` : 'p-4'
-        }`}
-      >
-        <ExpandedTargetsProvider>
-          <ProjectDetailsUi
-            project={parsedProps.project}
-            sourceMap={parsedProps.sourceMap}
-            variant="compact"
-          />
-        </ExpandedTargetsProvider>
+      <div className="not-prose overflow-y-auto" style={{ height }}>
+        <div className="m-4">
+          <ExpandedTargetsProvider initialExpanededTargets={expandedTargets}>
+            <ProjectDetailsUi
+              project={parsedProps.project}
+              sourceMap={parsedProps.sourceMap}
+              variant="compact"
+            />
+          </ExpandedTargetsProvider>
+        </div>
       </div>
     </div>
   );

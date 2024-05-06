@@ -109,7 +109,7 @@ details in a browser window.
 nx show project my-workspace --web
 ```
 
-{% project-details title="Project Details View" height="100px" %}
+{% project-details title="Project Details View" %}
 
 ```json
 {

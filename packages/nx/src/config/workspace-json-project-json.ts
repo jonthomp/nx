@@ -230,4 +230,10 @@ export interface TargetConfiguration<T = any> {
    * Metadata about the target
    */
   metadata?: TargetMetadata;
+
+  /**
+   * List of generators to run before the target to ensure the workspace
+   * is up to date.
+   */
+  syncGenerators?: string[];
 }

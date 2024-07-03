@@ -22,6 +22,7 @@ Target's configuration
 - [metadata](../../devkit/documents/TargetConfiguration#metadata): TargetMetadata
 - [options](../../devkit/documents/TargetConfiguration#options): T
 - [outputs](../../devkit/documents/TargetConfiguration#outputs): string[]
+- [syncGenerators](../../devkit/documents/TargetConfiguration#syncgenerators): string[]
 
 ## Properties
 
@@ -109,3 +110,12 @@ Target's options. They are passed in to the executor.
 
 List of the target's outputs. The outputs will be cached by the Nx computation
 caching engine.
+
+---
+
+### syncGenerators
+
+• `Optional` **syncGenerators**: `string`[]
+
+List of generators to run before the target to ensure the workspace
+is up to date.

@@ -225,6 +225,7 @@ function buildTscTargets(
           context.workspaceRoot,
           projectRoot
         ),
+        syncGenerators: ['@nx/js:typescript-sync'],
       };
     }
   }
@@ -257,6 +258,7 @@ function buildTscTargets(
         context.workspaceRoot,
         projectRoot
       ),
+      syncGenerators: ['@nx/js:typescript-sync'],
     };
   }
 

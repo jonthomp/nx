@@ -31,6 +31,10 @@ import { StoreRunInformationLifeCycle } from './life-cycles/store-run-informatio
 import { createTaskHasher } from '../hasher/create-task-hasher';
 import { TaskHistoryLifeCycle } from './life-cycles/task-history-life-cycle';
 import { isNxCloudUsed } from '../utils/nx-cloud-utils';
+import { getSyncGeneratorChanges } from '../utils/sync-generators';
+import { flushChanges } from '../generators/tree';
+import { createProjectGraphAsync } from '../project-graph/project-graph';
+import { prompt } from 'enquirer';
 
 async function getTerminalOutputLifeCycle(
   initiatingProject: string,
@@ -134,7 +138,7 @@ function createTaskGraphAndValidateCycles(
 
 export async function runCommand(
   projectsToRun: ProjectGraphProjectNode[],
-  projectGraph: ProjectGraph,
+  currentProjectGraph: ProjectGraph,
   { nxJson }: { nxJson: NxJsonConfiguration },
   nxArgs: NxArgs,
   overrides: any,
@@ -147,14 +151,15 @@ export async function runCommand(
     async () => {
       const projectNames = projectsToRun.map((t) => t.name);
 
-      const taskGraph = createTaskGraphAndValidateCycles(
-        projectGraph,
-        extraTargetDependencies ?? {},
-        projectNames,
-        nxArgs,
-        overrides,
-        extraOptions
-      );
+      const { projectGraph, taskGraph } =
+        await ensureWorkspaceIsInSyncAndGetGraphs(
+          currentProjectGraph,
+          projectNames,
+          nxArgs,
+          overrides,
+          extraTargetDependencies,
+          extraOptions
+        );
       const tasks = Object.values(taskGraph.tasks);
 
       const { lifeCycle, renderIsDone } = await getTerminalOutputLifeCycle(
@@ -184,6 +189,89 @@ export async function runCommand(
   );
 
   return status;
+}
+
+async function ensureWorkspaceIsInSyncAndGetGraphs(
+  projectGraph: ProjectGraph,
+  projectNames: string[],
+  nxArgs: NxArgs,
+  overrides: any,
+  extraTargetDependencies: Record<string, (TargetDependencyConfig | string)[]>,
+  extraOptions: { excludeTaskDependencies: boolean; loadDotEnvFiles: boolean }
+): Promise<{
+  projectGraph: ProjectGraph;
+  taskGraph: TaskGraph;
+}> {
+  let taskGraph = createTaskGraphAndValidateCycles(
+    projectGraph,
+    extraTargetDependencies ?? {},
+    projectNames,
+    nxArgs,
+    overrides,
+    extraOptions
+  );
+
+  // collect unique syncGenerators from the tasks
+  const uniqueSyncGenerators = new Set<string>();
+  for (const { target } of Object.values(taskGraph.tasks)) {
+    const { syncGenerators } =
+      projectGraph.nodes[target.project].data.targets[target.target];
+    if (!syncGenerators) {
+      continue;
+    }
+
+    for (const generator of syncGenerators) {
+      uniqueSyncGenerators.add(generator);
+    }
+  }
+
+  if (!uniqueSyncGenerators.size) {
+    // There are no sync generators registered in the tasks to run
+    return { projectGraph, taskGraph };
+  }
+
+  const changes = await getSyncGeneratorChanges(
+    Array.from(uniqueSyncGenerators)
+  );
+  if (!changes.length) {
+    // There are no changes to sync, workspace is up to date
+    return { projectGraph, taskGraph };
+  }
+
+  // TODO(leo): check wording and potentially change prompt to allow customizing options and provide footer
+  const applySyncChanges = await prompt<{ applySyncChanges: boolean }>([
+    {
+      name: 'applySyncChanges',
+      type: 'confirm',
+      message: 'Your workspace is out of sync. Would you like to sync it?',
+      initial: true,
+    },
+  ]).then((a) => a.applySyncChanges);
+
+  if (applySyncChanges) {
+    // Write changes to disk
+    flushChanges(workspaceRoot, changes);
+    // Re-create project graph and task graph
+    projectGraph = await createProjectGraphAsync();
+    taskGraph = createTaskGraphAndValidateCycles(
+      projectGraph,
+      extraTargetDependencies ?? {},
+      projectNames,
+      nxArgs,
+      overrides,
+      extraOptions
+    );
+  } else {
+    output.warn({
+      title: 'Workspace is out of sync',
+      bodyLines: [
+        'This could lead to unexpected results or errors when running tasks.',
+        'You can fix this by running `nx sync`.',
+      ],
+    });
+  }
+
+  return { projectGraph, taskGraph };
 }
 
 function setEnvVarsBasedOnArgs(nxArgs: NxArgs, loadDotEnvFiles: boolean) {

@@ -76,6 +76,11 @@ import {
 } from '../message-types/task-history';
 import { handleGetTaskHistoryForHashes } from './handle-get-task-history';
 import { handleWriteTaskRunsToHistory } from './handle-write-task-runs-to-history';
+import {
+  GET_SYNC_GENERATOR_CHANGES,
+  isHandleGetSyncGeneratorChangesMessage,
+} from '../message-types/get-sync-generator-changes';
+import { handleGetSyncGeneratorChanges } from './handle-get-sync-generator-changes';
 
 let performanceObserver: PerformanceObserver | undefined;
 let workspaceWatcherError: Error | undefined;
@@ -215,6 +220,10 @@ async function handleMessage(socket, data: string) {
   } else if (isHandleWriteTaskRunsToHistoryMessage(payload)) {
     await handleResult(socket, 'WRITE_TASK_RUNS_TO_HISTORY', () =>
       handleWriteTaskRunsToHistory(payload.taskRuns)
+    );
+  } else if (isHandleGetSyncGeneratorChangesMessage(payload)) {
+    await handleResult(socket, GET_SYNC_GENERATOR_CHANGES, () =>
+      handleGetSyncGeneratorChanges(payload.generators)
     );
   } else {
     await respondWithErrorAndExit(

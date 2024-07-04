@@ -2,7 +2,10 @@ import { existsSync } from 'fs';
 import { PackageJson } from '../../utils/package-json';
 import { prerelease } from 'semver';
 import { output } from '../../utils/output';
-import { getPackageManagerCommand } from '../../utils/package-manager';
+import {
+  getPackageManagerCommand,
+  PackageManagerCommands,
+} from '../../utils/package-manager';
 import { generateDotNxSetup } from './implementation/dot-nx/add-nx-scripts';
 import { runNxSync } from '../../utils/child-process';
 import { readJsonFile } from '../../utils/fileutils';
@@ -22,12 +25,41 @@ import { globWithWorkspaceContext } from '../../utils/workspace-context';
 import { connectExistingRepoToNxCloudPrompt } from '../connect/connect-to-nx-cloud';
 import { addNxToNpmRepo } from './implementation/add-nx-to-npm-repo';
 import { addNxToMonorepo } from './implementation/add-nx-to-monorepo';
+import { NxJsonConfiguration, readNxJson } from 'nx/src/config/nx-json';
 
 export interface InitArgs {
   interactive: boolean;
   nxCloud?: boolean;
   useDotNxInstallation?: boolean;
   integrated?: boolean; // For Angular projects only
+}
+
+export function installPlugins(
+  repoRoot: string,
+  plugins: string[],
+  pmc: PackageManagerCommands,
+  updatePackageScripts: boolean
+) {
+  if (plugins.length === 0) {
+    return;
+  }
+
+  addDepsToPackageJson(repoRoot, plugins);
+
+  runInstall(repoRoot, pmc);
+
+  output.log({ title: '🔨 Configuring plugins' });
+  for (const plugin of plugins) {
+    execSync(
+      `${pmc.exec} nx g ${plugin}:init --keepExistingVersions ${
+        updatePackageScripts ? '--updatePackageScripts' : ''
+      } --no-interactive`,
+      {
+        stdio: [0, 1, 2],
+        cwd: repoRoot,
+      }
+    );
+  }
 }
 
 export async function initHandler(options: InitArgs): Promise<void> {
@@ -49,7 +81,8 @@ export async function initHandler(options: InitArgs): Promise<void> {
       );
     }
     generateDotNxSetup(version);
-    const { plugins } = await detectPlugins();
+    const nxJson = readNxJson(process.cwd());
+    const { plugins } = await detectPlugins(nxJson);
     plugins.forEach((plugin) => {
       execSync(`./nx add ${plugin}`, {
         stdio: 'inherit',
@@ -73,10 +106,6 @@ export async function initHandler(options: InitArgs): Promise<void> {
     });
     return;
   }
-
-  output.log({ title: '🧐 Checking dependencies' });
-
-  const { plugins, updatePackageScripts } = await detectPlugins();
 
   const packageJson: PackageJson = readJsonFile('package.json');
   if (isMonorepo(packageJson)) {
@@ -103,26 +132,15 @@ export async function initHandler(options: InitArgs): Promise<void> {
   createNxJsonFile(repoRoot, [], [], {});
   updateGitIgnore(repoRoot);
 
-  addDepsToPackageJson(repoRoot, plugins);
+  const nxJson = readNxJson(repoRoot);
+
+  output.log({ title: '🧐 Checking dependencies' });
+
+  const { plugins, updatePackageScripts } = await detectPlugins(nxJson);
 
   output.log({ title: '📦 Installing Nx' });
 
-  runInstall(repoRoot, pmc);
-
-  if (plugins.length > 0) {
-    output.log({ title: '🔨 Configuring plugins' });
-    for (const plugin of plugins) {
-      execSync(
-        `${pmc.exec} nx g ${plugin}:init --keepExistingVersions ${
-          updatePackageScripts ? '--updatePackageScripts' : ''
-        } --no-interactive`,
-        {
-          stdio: [0, 1, 2],
-          cwd: repoRoot,
-        }
-      );
-    }
-  }
+  installPlugins(repoRoot, plugins, pmc, updatePackageScripts);
 
   if (useNxCloud) {
     output.log({ title: '🛠️ Setting up Nx Cloud' });
@@ -162,12 +180,16 @@ const npmPackageToPluginMap: Record<string, string> = {
   '@remix-run/dev': '@nx/remix',
 };
 
-async function detectPlugins(): Promise<{
+export async function detectPlugins(nxJson: NxJsonConfiguration): Promise<{
   plugins: string[];
   updatePackageScripts: boolean;
 }> {
   let files = ['package.json'].concat(
     await globWithWorkspaceContext(process.cwd(), ['**/*/package.json'])
+  );
+
+  const currentPlugins = new Set(
+    (nxJson.plugins ?? []).map((p) => (typeof p === 'string' ? p : p.plugin))
   );
 
   const detectedPlugins = new Set<string>();
@@ -195,6 +217,13 @@ async function detectPlugins(): Promise<{
   }
   if (existsSync('gradlew') || existsSync('gradlew.bat')) {
     detectedPlugins.add('@nx/gradle');
+  }
+
+  // Remove existing plugins
+  for (const plugin of detectedPlugins) {
+    if (currentPlugins.has(plugin)) {
+      detectedPlugins.delete(plugin);
+    }
   }
 
   const plugins = Array.from(detectedPlugins);

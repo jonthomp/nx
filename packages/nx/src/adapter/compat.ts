@@ -77,6 +77,7 @@ export const allowedWorkspaceExtensions = [
   'cacheDirectory',
   'useDaemonProcess',
   'useInferencePlugins',
+  'sync',
 ] as const;
 
 if (!patched) {

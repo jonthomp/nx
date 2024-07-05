@@ -298,6 +298,13 @@ interface NxReleaseConfiguration {
   versionPlans?: boolean;
 }
 
+export interface NxSyncConfiguration {
+  globalGenerators?: string[];
+  generatorOptions?: {
+    [generatorName: string]: Record<string, unknown>;
+  };
+}
+
 /**
  * Nx.json configuration
  *
@@ -445,6 +452,11 @@ export interface NxJsonConfiguration<T = '*' | string[]> {
    * Set this to false to disable adding inference plugins when generating new projects
    */
   useInferencePlugins?: boolean;
+
+  /**
+   * Configuration for `nx sync`.
+   */
+  sync?: NxSyncConfiguration;
 }
 
 export type PluginConfiguration = string | ExpandedPluginConfiguration;

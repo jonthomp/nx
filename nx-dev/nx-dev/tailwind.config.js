@@ -4,6 +4,10 @@ const path = require('path');
 const { createGlobPatternsForDependencies } = require('@nx/next/tailwind');
 const plugin = require('tailwindcss/plugin');
 
+const {
+  default: flattenColorPalette,
+} = require('tailwindcss/lib/util/flattenColorPalette');
+
 if (!createGlobPatternsForDependencies(__dirname).length)
   throw Error('GRAPH ISSUE: No dependency found when many are expected.');
 
@@ -23,6 +27,18 @@ const FlipAnimation = plugin(function ({ addUtilities }) {
     },
   });
 });
+
+// This plugin adds each Tailwind color as a global CSS variable, e.g. var(--gray-200).
+function addVariablesForColors({ addBase, theme }) {
+  let allColors = flattenColorPalette(theme('colors'));
+  let newVars = Object.fromEntries(
+    Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
+  );
+
+  addBase({
+    ':root': newVars,
+  });
+}
 
 module.exports = {
   experimental: {
@@ -61,5 +77,6 @@ module.exports = {
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),
     FlipAnimation,
+    addVariablesForColors,
   ],
 };

@@ -35,6 +35,8 @@ import { getSyncGeneratorChanges } from '../utils/sync-generators';
 import { flushChanges } from '../generators/tree';
 import { createProjectGraphAsync } from '../project-graph/project-graph';
 import { prompt } from 'enquirer';
+import * as ora from 'ora';
+import chalk = require('chalk');
 
 async function getTerminalOutputLifeCycle(
   initiatingProject: string,
@@ -230,25 +232,44 @@ async function ensureWorkspaceIsInSyncAndGetGraphs(
     return { projectGraph, taskGraph };
   }
 
-  const changes = await getSyncGeneratorChanges(
-    Array.from(uniqueSyncGenerators)
-  );
+  const syncGenerators = Array.from(uniqueSyncGenerators);
+  const changes = await getSyncGeneratorChanges(syncGenerators);
   if (!changes.length) {
     // There are no changes to sync, workspace is up to date
     return { projectGraph, taskGraph };
   }
 
-  // TODO(leo): check wording and potentially change prompt to allow customizing options and provide footer
-  const applySyncChanges = await prompt<{ applySyncChanges: boolean }>([
-    {
-      name: 'applySyncChanges',
-      type: 'confirm',
-      message: 'Your workspace is out of sync. Would you like to sync it?',
-      initial: true,
-    },
-  ]).then((a) => a.applySyncChanges);
+  output.addNewline();
+  const promptConfig = {
+    name: 'applyChanges',
+    type: 'select',
+    message:
+      'Your workspace configuration for the tasks is out of sync. Would you like to sync it?',
+    choices: [
+      {
+        name: 'yes',
+        message: 'Yes, sync changes and run the tasks',
+      },
+      {
+        name: 'no',
+        message: 'No, run the tasks without syncing changes',
+      },
+    ],
+    footer: () =>
+      chalk.dim(
+        `\nThe tasks to run are configured to sync the workspace using the following generators: ${syncGenerators
+          .map((g) => `"${g}"`)
+          .join(', ')}.`
+      ),
+  };
+  const applySyncChanges = await prompt<{ applyChanges: 'yes' | 'no' }>([
+    promptConfig,
+  ]).then(({ applyChanges }) => applyChanges === 'yes');
 
   if (applySyncChanges) {
+    const spinner = ora(`Syncing workspace configuration...`);
+    spinner.start();
+
     // Write changes to disk
     flushChanges(workspaceRoot, changes);
     // Re-create project graph and task graph
@@ -261,12 +282,14 @@ async function ensureWorkspaceIsInSyncAndGetGraphs(
       overrides,
       extraOptions
     );
+
+    spinner.succeed(`The workspace configuration was synced successfully!`);
   } else {
     output.warn({
-      title: 'Workspace is out of sync',
+      title: 'The workspace is out of sync',
       bodyLines: [
         'This could lead to unexpected results or errors when running tasks.',
-        'You can fix this by running `nx sync`.',
+        'You can fix this by manually running `nx sync`.',
       ],
     });
   }

@@ -14,4 +14,6 @@ mod walker;
 pub mod watch;
 pub mod workspace;
 
+mod db;
+mod machine_id;
 pub mod wasm;

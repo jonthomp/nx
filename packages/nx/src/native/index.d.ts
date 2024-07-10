@@ -26,6 +26,23 @@ export declare class ImportResult {
   staticImportExpressions: Array<string>
 }
 
+export declare class NxCache {
+  cacheDirectory: string
+  constructor(workspaceRoot: string, cachePath: string, workspaceDataPath: string)
+  get(task: TaskResult): CachedResult | null
+  put(hash: string, terminalOutput: string, outputs: Array<string>, code: number): void
+  getFromCacheDirectory(hash: string): CachedResult | null
+  getTaskOutputsPath(hash: string): string
+  copyFilesFromCache(cachedResult: CachedResult, outputs: Array<string>): void
+  removeOldCacheRecords(): void
+}
+
+export declare class NxTaskHistory {
+  constructor(workspaceDataPath: string)
+  recordTaskRuns(taskRuns: Array<TaskRun>): void
+  getFlakyTasks(hashes: Array<string>): Array<string>
+}
+
 export declare class RustPseudoTerminal {
   constructor()
   runCommand(command: string, commandDir?: string | undefined | null, jsEnv?: Record<string, string> | undefined | null, execArgv?: Array<string> | undefined | null, quiet?: boolean | undefined | null, tty?: boolean | undefined | null): ChildProcess
@@ -67,6 +84,12 @@ export declare class WorkspaceContext {
   getFilesInDirectory(directory: string): Array<string>
 }
 
+export interface CachedResult {
+  code: number
+  terminalOutput: string
+  outputsPath: string
+}
+
 export declare export function copy(src: string, dest: string): void
 
 export interface DepsOutputsInput {
@@ -84,10 +107,6 @@ export declare const enum EventType {
   create = 'create'
 }
 
-/**
- * Expands the given entries into a list of existing directories and files.
- * This is used for copying outputs to and from the cache
- */
 export declare export function expandOutputs(directory: string, entries: Array<string>): Array<string>
 
 export interface ExternalDependenciesInput {
@@ -198,6 +217,21 @@ export interface TaskGraph {
   roots: Array<string>
   tasks: Record<string, Task>
   dependencies: Record<string, Array<string>>
+}
+
+export interface TaskResult {
+  hash: string
+  project: string
+  target: string
+  configuration?: string
+}
+
+export interface TaskRun {
+  hash: string
+  status: string
+  code: number
+  start: number
+  end: number
 }
 
 export interface TaskTarget {

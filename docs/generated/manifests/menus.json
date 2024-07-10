@@ -8552,6 +8552,14 @@
                 "isExternal": false,
                 "children": [],
                 "disableCollapsible": false
+              },
+              {
+                "name": "sync",
+                "path": "/nx-api/nx/documents/sync",
+                "id": "sync",
+                "isExternal": false,
+                "children": [],
+                "disableCollapsible": false
               }
             ],
             "isExternal": false,

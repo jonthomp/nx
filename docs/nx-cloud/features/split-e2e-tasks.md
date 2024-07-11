@@ -394,3 +394,13 @@ With more granular e2e tasks, all the other features of Nx become more powerful.
 ### More Precise Flaky Task Identification
 
 Nx Agents [automatically re-run failed flaky e2e tests](/ci/features/flaky-tasks) on a separate agent without a developer needing to manually re-run the CI pipeline. Leveraging e2e task splitting, Nx identifies the specific flaky test file - this way you can quickly fix the offending test file. Without e2e splitting, Nx identifies that at least one of the e2e tests are flaky - requiring you to find the flaky test on your own.
+
+## Use Atomizer only with Nx Cloud Distribution!
+
+{% callout type="warning" title="To benefit from the performance improvements of Atomizer, distribution with Nx Cloud is required." %}
+{% /callout %}
+
+When running an atomized task like `e2e-ci`, Nx will spawn a new instance of Cypress, Playwright or Jest for each file to facilitate the benefits listed above.
+When running tasks on a single machine, this setup can lead to degraded performance. Each process comes with some overhead, which will slow things down.
+
+When running locally or in CI without distribution, use the non-atomized target (`e2e` in the example above).

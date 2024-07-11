@@ -1,3 +1,7 @@
+import { ProjectGraph } from '../config/project-graph';
+import { TaskGraph } from '../config/task-graph';
+import { output } from '../utils/output';
+
 function _findCycle(
   graph: { dependencies: Record<string, string[]> },
   id: string,
@@ -65,4 +69,43 @@ export function makeAcyclic(graph: {
   graph.roots = Object.keys(graph.dependencies).filter(
     (t) => graph.dependencies[t].length === 0
   );
+}
+
+export function validateAtomizedTasks(
+  taskGraph: TaskGraph,
+  projectGraph: ProjectGraph
+): void {
+  if (process.env['NX_SKIP_ATOMIZER_VALIDATION']) {
+    return;
+  }
+  const tasksWithAtomizer = Object.values(taskGraph.tasks).filter(
+    (task) =>
+      projectGraph.nodes[task.target.project]?.data?.targets?.[
+        task.target.target
+      ]?.metadata?.nonAtomizedTarget !== undefined
+  );
+
+  const isInDTE =
+    process.env['NX_CLOUD_DISTRIBUTED_EXECUTION_ID'] ||
+    process.env['NX_AGENT_NAME'];
+
+  if (tasksWithAtomizer.length > 0 && !isInDTE) {
+    const linkLine =
+      'Learn more at https://nx.dev/ci/features/split-e2e-tasks#use-atomizer-only-with-nx-cloud-distribution';
+    if (tasksWithAtomizer.length === 1) {
+      output.error({
+        title: `The ${tasksWithAtomizer[0].id} task uses the atomizer and should only be run with Nx Cloud distribution.`,
+        bodyLines: [linkLine],
+      });
+    } else {
+      output.error({
+        title: `The following tasks use the atomizer and should only be run with Nx Cloud distribution:`,
+        bodyLines: [
+          `${tasksWithAtomizer.map((task) => task.id).join(', ')}`,
+          linkLine,
+        ],
+      });
+    }
+    process.exit(1);
+  }
 }

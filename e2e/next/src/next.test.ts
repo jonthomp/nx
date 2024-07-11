@@ -195,6 +195,9 @@ describe('Next.js Applications', () => {
     if (runE2ETests('cypress')) {
       const e2eResults = runCLI(`e2e-ci ${appName}-e2e --verbose`, {
         verbose: true,
+        env: {
+          NX_SKIP_ATOMIZER_VALIDATION: 'true',
+        },
       });
       expect(e2eResults).toContain(
         'Successfully ran target e2e-ci for project'

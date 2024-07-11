@@ -161,6 +161,10 @@ describe('Jest', () => {
       return json;
     });
 
-    await runCLIAsync(`e2e-ci ${libName}`);
+    await runCLIAsync(`e2e-ci ${libName}`, {
+      env: {
+        NX_SKIP_ATOMIZER_VALIDATION: 'true',
+      },
+    });
   }, 90000);
 });

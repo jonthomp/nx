@@ -1,6 +1,10 @@
+import { join } from 'path';
 import { ProjectGraph } from '../config/project-graph';
 import { TaskGraph } from '../config/task-graph';
 import { output } from '../utils/output';
+import { existsSync } from 'fs';
+import { readFileSync } from 'fs-extra';
+import { workspaceRoot } from '../utils/workspace-root';
 
 function _findCycle(
   graph: { dependencies: Record<string, string[]> },
@@ -85,11 +89,7 @@ export function validateAtomizedTasks(
       ]?.metadata?.nonAtomizedTarget !== undefined
   );
 
-  const isInDTE =
-    process.env['NX_CLOUD_DISTRIBUTED_EXECUTION_ID'] ||
-    process.env['NX_AGENT_NAME'];
-
-  if (tasksWithAtomizer.length > 0 && !isInDTE) {
+  if (tasksWithAtomizer.length > 0 && !isInDTE()) {
     const linkLine =
       'Learn more at https://nx.dev/ci/features/split-e2e-tasks#use-atomizer-only-with-nx-cloud-distribution';
     if (tasksWithAtomizer.length === 1) {
@@ -108,4 +108,26 @@ export function validateAtomizedTasks(
     }
     process.exit(1);
   }
+}
+
+function isInDTE(): boolean {
+  if (
+    process.env['NX_CLOUD_DISTRIBUTED_EXECUTION_ID'] ||
+    process.env['NX_AGENT_NAME']
+  ) {
+    return true;
+  }
+
+  // checks for DTE marker file - needed so we can check for DTE on the main nx job
+  const nxCacheDirectory = process.env.NX_CACHE_DIRECTORY
+    ? [process.env['NX_CACHE_DIRECTORY']]
+    : ['node_modules', '.cache', 'nx'];
+  const dir = join(workspaceRoot, ...nxCacheDirectory);
+  const dteMarker = join(dir, 'NX_CLOUD_DISTRIBUTED_EXECUTION');
+
+  if (existsSync(dteMarker) && readFileSync(dteMarker, 'utf-8') === 'true') {
+    return true;
+  }
+
+  return false;
 }

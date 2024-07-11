@@ -1,8 +1,12 @@
+import { join } from 'path';
 import {
   findCycle,
   makeAcyclic,
   validateAtomizedTasks,
 } from './task-graph-utils';
+import { ensureDirSync, removeSync, writeFileSync } from 'fs-extra';
+import { tmpdir } from 'os';
+import { workspaceRoot } from '../utils/workspace-root';
 
 describe('task graph utils', () => {
   describe('findCycles', () => {
@@ -108,6 +112,7 @@ describe('task graph utils', () => {
       validateAtomizedTasks(taskGraph as any, projectGraph as any);
       expect(mockProcessExit).not.toHaveBeenCalled();
     });
+
     it('should exit if atomized task is present but no DTE', () => {
       const taskGraph = {
         tasks: {
@@ -137,6 +142,7 @@ describe('task graph utils', () => {
       validateAtomizedTasks(taskGraph as any, projectGraph as any);
       expect(mockProcessExit).toHaveBeenCalledWith(1);
     });
+
     it('should do nothing if atomized task is present in DTE', () => {
       process.env['NX_CLOUD_DISTRIBUTED_EXECUTION_ID'] = '123';
       const taskGraph = {
@@ -167,6 +173,7 @@ describe('task graph utils', () => {
       validateAtomizedTasks(taskGraph as any, projectGraph as any);
       expect(mockProcessExit).not.toHaveBeenCalled();
     });
+
     it('should do nothing if atomized task is present but escape hatch env var is set', () => {
       process.env['NX_SKIP_ATOMIZER_VALIDATION'] = 'true';
       const taskGraph = {
@@ -196,6 +203,90 @@ describe('task graph utils', () => {
       };
       validateAtomizedTasks(taskGraph as any, projectGraph as any);
       expect(mockProcessExit).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing if atomized task is present and dte marker file exists', () => {
+      const taskGraph = {
+        tasks: {
+          'e2e:e2e-ci': {
+            target: {
+              project: 'e2e',
+              target: 'e2e-ci',
+            },
+          },
+        },
+      };
+      const projectGraph = {
+        nodes: {
+          e2e: {
+            data: {
+              targets: {
+                'e2e-ci': {
+                  metadata: {
+                    nonAtomizedTarget: 'e2e',
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const dteMarkerDir = join(workspaceRoot, 'node_modules', '.cache', 'nx');
+      const dteMarkerFile = join(
+        dteMarkerDir,
+        'NX_CLOUD_DISTRIBUTED_EXECUTION'
+      );
+      ensureDirSync(dteMarkerDir);
+      writeFileSync(dteMarkerFile, 'true');
+
+      validateAtomizedTasks(taskGraph as any, projectGraph as any);
+      expect(mockProcessExit).not.toHaveBeenCalled();
+
+      removeSync(dteMarkerFile);
+    });
+
+    it('should do nothing if atomized task is present and dte marker file exists in NX_CACHE_DIRECTORY', () => {
+      const cacheDirectory = join('node_modules', 'my-cache-dir');
+      process.env['NX_CACHE_DIRECTORY'] = cacheDirectory;
+      const taskGraph = {
+        tasks: {
+          'e2e:e2e-ci': {
+            target: {
+              project: 'e2e',
+              target: 'e2e-ci',
+            },
+          },
+        },
+      };
+      const projectGraph = {
+        nodes: {
+          e2e: {
+            data: {
+              targets: {
+                'e2e-ci': {
+                  metadata: {
+                    nonAtomizedTarget: 'e2e',
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const dteMarkerDir = join(workspaceRoot, cacheDirectory);
+      const dteMarkerFile = join(
+        dteMarkerDir,
+        'NX_CLOUD_DISTRIBUTED_EXECUTION'
+      );
+      ensureDirSync(dteMarkerDir);
+      writeFileSync(dteMarkerFile, 'true');
+
+      validateAtomizedTasks(taskGraph as any, projectGraph as any);
+      expect(mockProcessExit).not.toHaveBeenCalled();
+
+      removeSync(dteMarkerFile);
     });
   });
 });

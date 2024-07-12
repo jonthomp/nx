@@ -295,7 +295,7 @@ async function buildCypressTargets(
       }
 
       targets[options.ciTargetName] = {
-        executor: 'nx:noop',
+        executor: 'nx:atomizer',
         cache: true,
         inputs,
         outputs,

@@ -252,7 +252,7 @@ async function buildPlaywrightTargets(
     targets[options.ciTargetName] ??= {};
 
     targets[options.ciTargetName] = {
-      executor: 'nx:noop',
+      executor: 'nx:atomizer',
       cache: ciBaseTargetConfig.cache,
       inputs: ciBaseTargetConfig.inputs,
       outputs: ciBaseTargetConfig.outputs,

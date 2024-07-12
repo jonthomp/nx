@@ -554,6 +554,7 @@
       - [noop](/nx-api/nx/executors/noop)
       - [run-commands](/nx-api/nx/executors/run-commands)
       - [run-script](/nx-api/nx/executors/run-script)
+      - [atomizer](/nx-api/nx/executors/atomizer)
     - [generators](/nx-api/nx/generators)
       - [connect-to-nx-cloud](/nx-api/nx/generators/connect-to-nx-cloud)
   - [playwright](/nx-api/playwright)

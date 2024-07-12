@@ -904,8 +904,12 @@ export function isCompatibleTarget(
 ) {
   const oneHasNoExecutor = !a.executor || !b.executor;
   const bothHaveSameExecutor = a.executor === b.executor;
+  const areNoopAndAtomizer =
+    (a.executor === 'nx:noop' && b.executor === 'nx:atomizer') ||
+    (a.executor === 'nx:atomizer' && b.executor === 'nx:noop');
 
   if (oneHasNoExecutor) return true;
+  if (areNoopAndAtomizer) return true;
   if (!bothHaveSameExecutor) return false;
 
   const isRunCommands = a.executor === 'nx:run-commands';

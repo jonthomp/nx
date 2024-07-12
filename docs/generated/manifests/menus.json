@@ -8617,6 +8617,14 @@
                 "children": [],
                 "isExternal": false,
                 "disableCollapsible": false
+              },
+              {
+                "id": "atomizer",
+                "path": "/nx-api/nx/executors/atomizer",
+                "name": "atomizer",
+                "children": [],
+                "isExternal": false,
+                "disableCollapsible": false
               }
             ],
             "isExternal": false,

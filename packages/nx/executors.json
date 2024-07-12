@@ -14,6 +14,11 @@
       "implementation": "./src/executors/run-script/run-script.impl",
       "schema": "./src/executors/run-script/schema.json",
       "description": "Run an NPM script using Nx."
+    },
+    "atomizer": {
+      "implementation": "./src/executors/atomizer/atomizer.impl",
+      "schema": "./src/executors/atomizer/schema.json",
+      "description": "An executor that is used as the root task for atomized tasks. Ensures it's being run in distribution and otherwise does nothing."
     }
   }
 }

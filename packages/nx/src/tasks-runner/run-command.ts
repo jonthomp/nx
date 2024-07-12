@@ -28,11 +28,7 @@ import { StoreRunInformationLifeCycle } from './life-cycles/store-run-informatio
 import { TaskHistoryLifeCycle } from './life-cycles/task-history-life-cycle';
 import { TaskProfilingLifeCycle } from './life-cycles/task-profiling-life-cycle';
 import { TaskTimingsLifeCycle } from './life-cycles/task-timings-life-cycle';
-import {
-  findCycle,
-  makeAcyclic,
-  validateAtomizedTasks,
-} from './task-graph-utils';
+import { findCycle, makeAcyclic } from './task-graph-utils';
 import { TasksRunner, TaskStatus } from './tasks-runner';
 import { shouldStreamOutput } from './utils';
 
@@ -95,7 +91,7 @@ async function getTerminalOutputLifeCycle(
   }
 }
 
-function createTaskGraphAndRunValidations(
+function createTaskGraphAndValidateCycles(
   projectGraph: ProjectGraph,
   extraTargetDependencies: TargetDependencies,
   projectNames: string[],
@@ -133,8 +129,6 @@ function createTaskGraphAndRunValidations(
     }
   }
 
-  validateAtomizedTasks(taskGraph, projectGraph);
-
   return taskGraph;
 }
 
@@ -153,7 +147,7 @@ export async function runCommand(
     async () => {
       const projectNames = projectsToRun.map((t) => t.name);
 
-      const taskGraph = createTaskGraphAndRunValidations(
+      const taskGraph = createTaskGraphAndValidateCycles(
         projectGraph,
         extraTargetDependencies ?? {},
         projectNames,

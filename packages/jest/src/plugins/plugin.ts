@@ -242,7 +242,7 @@ async function buildJestTargets(
       const dependsOn: string[] = [];
 
       targets[options.ciTargetName] = {
-        executor: 'nx:noop',
+        executor: 'nx:atomizer',
         cache: true,
         inputs,
         outputs,

@@ -1,0 +1,10 @@
+{
+    "version": 2,
+    "title": "Atomizer",
+    "description": "An executor that is used as the root task for atomized tasks. Ensures it's being run in distribution and otherwise does nothing.",
+    "type": "object",
+    "cli": "nx",
+    "outputCapture": "pipe",
+    "properties": {},
+    "additionalProperties": true
+}

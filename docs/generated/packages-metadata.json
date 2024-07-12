@@ -1957,6 +1957,15 @@
         "originalFilePath": "/packages/nx/src/executors/run-script/schema.json",
         "path": "nx/executors/run-script",
         "type": "executor"
+      },
+      {
+        "description": "An executor that is used as the root task for atomized tasks. Ensures it's being run in distribution and otherwise does nothing.",
+        "file": "generated/packages/nx/executors/atomizer.json",
+        "hidden": false,
+        "name": "atomizer",
+        "originalFilePath": "/packages/nx/src/executors/atomizer/schema.json",
+        "path": "nx/executors/atomizer",
+        "type": "executor"
       }
     ],
     "generators": [

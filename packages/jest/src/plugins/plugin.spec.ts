@@ -183,7 +183,7 @@ describe('@nx/jest/plugin', () => {
                     "dependsOn": [
                       "test-ci--src/unit.spec.ts",
                     ],
-                    "executor": "nx:noop",
+                    "executor": "nx:atomizer",
                     "inputs": [
                       "default",
                       "^production",

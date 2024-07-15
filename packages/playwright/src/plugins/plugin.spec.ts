@@ -95,7 +95,7 @@ describe('@nx/playwright/plugin', () => {
                   "e2e-ci": {
                     "cache": true,
                     "dependsOn": [],
-                    "executor": "nx:noop",
+                    "executor": "nx:atomizer",
                     "inputs": [
                       "default",
                       "^production",
@@ -204,7 +204,7 @@ describe('@nx/playwright/plugin', () => {
                   "e2e-ci": {
                     "cache": true,
                     "dependsOn": [],
-                    "executor": "nx:noop",
+                    "executor": "nx:atomizer",
                     "inputs": [
                       "default",
                       "^production",
@@ -295,7 +295,7 @@ describe('@nx/playwright/plugin', () => {
             "target": "e2e-ci--tests/run-me.spec.ts",
           },
         ],
-        "executor": "nx:noop",
+        "executor": "nx:atomizer",
         "inputs": [
           "default",
           "^production",

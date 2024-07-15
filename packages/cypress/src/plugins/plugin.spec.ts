@@ -339,7 +339,7 @@ describe('@nx/cypress/plugin', () => {
                         "target": "e2e-ci--src/test.cy.ts",
                       },
                     ],
-                    "executor": "nx:noop",
+                    "executor": "nx:atomizer",
                     "inputs": [
                       "default",
                       "^production",

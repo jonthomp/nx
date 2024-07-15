@@ -1,12 +1,4 @@
-import { join } from 'path';
-import {
-  findCycle,
-  makeAcyclic,
-  validateAtomizedTasks,
-} from './task-graph-utils';
-import { ensureDirSync, removeSync, writeFileSync } from 'fs-extra';
-import { tmpdir } from 'os';
-import { workspaceRoot } from '../utils/workspace-root';
+import { findCycle, makeAcyclic } from './task-graph-utils';
 
 describe('task graph utils', () => {
   describe('findCycles', () => {

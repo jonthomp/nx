@@ -163,7 +163,8 @@ describe('Jest', () => {
 
     await runCLIAsync(`e2e-ci ${libName}`, {
       env: {
-        NX_SKIP_ATOMIZER_VALIDATION: 'true',
+        // e2e-ci will only run with DTE so we set this for local testing
+        NX_AGENT_NAME: process.env['NX_AGENT_NAME'] ?? 'fake-agent-00',
       },
     });
   }, 90000);

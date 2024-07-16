@@ -196,7 +196,8 @@ describe('Next.js Applications', () => {
       const e2eResults = runCLI(`e2e-ci ${appName}-e2e --verbose`, {
         verbose: true,
         env: {
-          NX_SKIP_ATOMIZER_VALIDATION: 'true',
+          // e2e-ci will only run with DTE so we set this for local testing
+          NX_AGENT_NAME: process.env['NX_AGENT_NAME'] ?? 'fake-agent-00',
         },
       });
       expect(e2eResults).toContain(

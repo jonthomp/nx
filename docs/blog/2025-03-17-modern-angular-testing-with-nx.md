@@ -11,10 +11,10 @@ description: 'Learn how Nx enhances Angular testing by integrating modern tools 
 
 This article is part of the Angular Week series:
 
-- [Modern Angular Testing with Nx](/blog/modern-angular-testing-with-nx)
-- **Better Structure**
-- **Using Rspack with Angular**
-- **Enterprise Patterns**
+- **Modern Angular Testing with Nx**
+- [Angular Architecture Guide To Building Maintainable Applications at Scale](/blog/architecting-angular-applications)
+- [Using Rspack with Angular](/blog/using-rspack-with-angular)
+- [Enterprise Patterns](/blog/enterprise-angular-book)
 
 {% /callout %}
 
